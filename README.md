@@ -165,8 +165,10 @@ Despite the lower segmentation performance, the fascicle predictions remained us
 
 # Ideas for Future Work
 
-In just two days we have barely scratched the surface of this challenge. To meaningfully compete, we would need to 
-* Reach out to the author of the competition about labels for images -- both muscle type/ location and contracted vs. related
-* Investigate applying a pretrained U-Net on general ultrasound images to improve the models ability to learn from our limited dataset. It successfully been applied to lung ultrasounds: [Transfer Learning U-Net for Lung Ultrasound Segmentation](https://arxiv.org/abs/2110.02196)
-* More thorough examination, filtering, and preprocessing of the training masks. We noticed that several aponeurosis training masks feature 3 tissue sheets, which should not be possible. In the time we had, we chose too ignore this, but filtering these out could improve model performance.
+In just two days we have barely scratched the surface of this challenge. Here are some ideas we have for future work:
+* Allow the preprocessed images to train until early stopping is triggered, likely around 25 epochs based on existing literature.
+* Reach out to the author of the competition about labels for images -- both muscle type/ location and contracted vs. relaxed. 
+* Investigate applying a pretrained U-Net on general ultrasound images to improve the models ability to learn from our limited dataset. It has successfully been applied to lung ultrasounds: [Transfer Learning U-Net for Lung Ultrasound Segmentation](https://arxiv.org/abs/2110.02196)
+* More thorough examination, filtering, and preprocessing of the training masks. We noticed that several aponeurosis training masks feature 3 tissue sheets, which should not be possible. We chose too ignore this for these two days, but filtering these out could improve model performance.
+
 
