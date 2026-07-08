@@ -119,9 +119,11 @@ After segmentation, we applied several traditional image processing techniques:
 * Line fitting
 * Geometric calculations
 
+These anatomical measurements are fundamentally geometric. Using deterministic image processing after segmentation makes every measurement transparent, reproducible, and easy to verify visually.
+
 ![Example annotated test image](blog_figures/annotated_our_work.png)
 
-These anatomical measurements are fundamentally geometric. Using deterministic image processing after segmentation makes every measurement transparent, reproducible, and easy to verify visually.
+Here you can see an example test image with our calculated annotations. The lines fit to the predicted aponeuroses masks are shown in red and blue, while the 3 most prominent fascicles are highlighted and fitted with yellow dashed lines. From these geometries we can compute muscle thickness, pennation angle, and fascicle length.
 
 # Discussion of Experiments
 
