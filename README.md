@@ -1,12 +1,12 @@
 # Muscle Architecture Estimation from Ultrasound Images
 
-In the last two days, we took on a Kaggle challenge released by a researcher interested in muscular adaptations to training and muscular development. The challenge was this: can we completely automatate the calculation of key parameters from ultrasound muscle images? Ultrasound scans are one of the most accessible diagnostic imaging techniques, but extracting useful information from them typically requires manual annotations. This is not only tedious, but also inconsistent.
+In the last two days, we took on a Kaggle challenge released by a researcher interested in muscular adaptations to training and muscular development. The challenge was this: can we completely automatate the calculation of key parameters from ultrasound muscle images? Ultrasound scans are one of the most accessible diagnostic imaging techniques, but extracting useful information from them typically requires manual annotations, which is not only tedious, but also inconsistent. Deep learning techniques for ultrasound images have great potential to accelerate clinical research and improve monitoring of rehabing from injury.
 
 Using data made available through the Universal Musculoskeletal Ultrasonography Database (UMUD), have access to 1048 images for aponeurosis 2761 images for fascicles, each with an associated mannually created mask for training. 
 
 ![Annotated ultrasound of the 3 parameters](blog_figures/umud_diagram.png)
 
-Initially, we were curious we could predict these three measurements directly from ultrasound images. It's never been done before in the competition, and while we didn't anticipate high performance, we were interested in using it as a baseline. However, the training data available does not contain the ground truth target metrics, just binary masks. 
+Initially, we were curious if we could predict these three measurements directly from ultrasound images. It's never been done before in the competition, and while we didn't anticipate high performance, we were interested in using it as a baseline. However, the training data available does not contain the ground truth target metrics, just binary masks. 
 
 Ultimately, we decided on the standard segmentation followed by geometric calculation approach. We first segmented the relevant anatomical structures (aponeuroses and fascicles) using a U-Net model. The resulting segmentation masks were then processed using classical image processing and geometric analysis to calculate the final measurements. 
 
@@ -163,4 +163,10 @@ This difference is expected because fascicles occupy only a very small portion o
 
 Despite the lower segmentation performance, the fascicle predictions remained useful after applying our post-processing pipeline. Skeletonization, connected-component analysis, filtering, and line fitting removed many spurious detections and allowed anatomically meaningful fascicle lines to be extracted for estimating pennation angle and fascicle length.
 
+# Ideas for Future Work
+
+In just two days we have barely scratched the surface of this challenge. To meaningfully compete, we would need to 
+* Reach out to the author of the competition about labels for images -- both muscle type/ location and contracted vs. related
+* Investigate applying a pretrained U-Net on general ultrasound images to improve the models ability to learn from our limited dataset. It successfully been applied to lung ultrasounds: [Transfer Learning U-Net for Lung Ultrasound Segmentation](https://arxiv.org/abs/2110.02196)
+* More thorough examination, filtering, and preprocessing of the training masks. We noticed that several aponeurosis training masks feature 3 tissue sheets, which should not be possible. In the time we had, we chose too ignore this, but filtering these out could improve model performance.
 
