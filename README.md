@@ -1,78 +1,44 @@
 # Muscle Architecture Estimation from Ultrasound Images
 
-## Project Overview
-
-The goal of our project was to automatically estimate muscle architecture parameters from ultrasound images. Specifically, our pipeline estimates:
-
 In the last two days, we took on a Kaggle challenge released by a researcher interested in muscular adaptations to training and muscular development. The challenge was this: can we completely automatate the calculation of key parameters from ultrasound muscle images? Ultrasound scans are one of the most accessible diagnostic imaging techniques, but extracting useful information from them typically requires manual annotations. This is not only tedious, but also inconsistent.
 
-Using data made available through the Universal Musculoskeletal Ultrasonography Database (UMUD), have access to 
-
-* **Muscle Thickness (MT)**
-* **Pennation Angle (PA)**
-* **Fascicle Length (FL)**
+Using data made available through the Universal Musculoskeletal Ultrasonography Database (UMUD), have access to 1048 images for aponeurosis 2761 images for fascicles, each with an associated mannually created mask for training. 
 
 ![Annotated ultrasound of the 3 parameters](blog_figures/umud_diagram.png)
 
-Rather than predicting these measurements directly, we first segmented the relevant anatomical structures (aponeuroses and fascicles) using deep learning. The resulting segmentation masks were then processed using classical image processing and geometric analysis to calculate the final measurements.
+Initially, we were curious we could predict these three measurements directly from ultrasound images. It's never been done before in the competition, and while we didn't anticipate high performance, we were interested in using it as a baseline. However, the training data available does not contain the ground truth target metrics, just binary masks. 
+
+Ultimately, we decided on the standard segmentation followed by geometric calculation approach. We first segmented the relevant anatomical structures (aponeuroses and fascicles) using a U-Net model. The resulting segmentation masks were then processed using classical image processing and geometric analysis to calculate the final measurements. 
 
 This approach makes the system more interpretable because every prediction can be visually inspected before the final measurements are computed.
 
 ---
 
-# Overall Pipeline
+# Our Pipeline
 
-The complete pipeline consists of the following stages:
-
-1. Load and preprocess ultrasound images.
-2. Train a U-Net to segment the aponeuroses.
-3. Train a second U-Net to segment the fascicles.
-4. Clean the predicted masks using morphological operations.
+1. Load and preprocess ultrasound images
+2. Train a U-Net to segment the aponeuroses
+3. Train a second U-Net to segment the fascicles
+4. Clean the predicted masks using morphological operations
 5. Extract the anatomical structures from the cleaned masks.
 6. Compute:
-
    * Muscle Thickness (MT)
    * Pennation Angle (PA)
    * Fascicle Length (FL)
 7. Save the final predictions to a CSV file.
 
+Code in this repository
+* apo_training.ipynb: load and preprocesses the ultrasound images, checking for inverted masks in training data, and then train the standard U-Net followed by the U-Net with attention added.
+* fasc_training.ipynb: load and preprocesses with the same procedure as the aponeurosis set, with the exception that no inversion was necessary.
+* postprocessing.ipynb: cleaning masks, fitting lines, computing metrics, and saving predictions
+
 ---
 
 # Design Decisions
 
-## 1. Formulating the Problem as Image Segmentation
+## Choosing U-Net
 
-Rather than predicting MT, PA, and FL directly, we formulated the task as an image segmentation problem.
-
-We trained two independent neural networks:
-
-* One to segment the **aponeuroses**
-* One to segment the **fascicles**
-
-The predicted masks were then converted into anatomical measurements using geometric calculations.
-
-### Why
-
-The competition dataset already provides segmentation masks for training.
-
-By segmenting the anatomical structures first, we preserved the spatial information required to compute accurate geometric measurements. This also made the pipeline significantly more interpretable because the intermediate segmentation masks can be visualized and inspected before any measurements are calculated.
-
-### Alternative Approaches
-
-One alternative would have been training a regression network to predict MT, PA, and FL directly from the ultrasound image.
-
-We decided against this approach because:
-
-* It provides no explanation for how the measurements were obtained.
-* Incorrect predictions are difficult to debug.
-* The available segmentation masks naturally support a segmentation-based solution.
-* The available training dataset did not have labels for MT, PA and FL, making it hard to predict these directly without using binary masks.
-
----
-
-## 2. Choosing U-Net
-
-Both segmentation models use the U-Net architecture, one for segmenting the aponeuroses and another for segmenting the fascicles.
+Both segmentation models use the same U-Net architecture, one for segmenting the aponeuroses and another for segmenting the fascicles.
 
 Our implementation consists of four main components:
 
@@ -80,8 +46,6 @@ Our implementation consists of four main components:
 - **Bottleneck**
 - **Decoder**
 - **Skip connections**
-
-The network takes a **512 × 512 grayscale ultrasound image** as input.
 
 The **encoder** contains three downsampling stages. Each stage consists of two 3×3 convolutional layers with ReLU activation followed by a max-pooling layer. The convolutional layers learn increasingly complex image features, while max pooling reduces the spatial resolution and allows the network to capture more abstract information. The number of filters increases from **32 → 64 → 128**.
 
@@ -91,13 +55,11 @@ The **decoder** reconstructs the segmentation mask by progressively upsampling t
 
 Finally, a **1×1 convolution with a sigmoid activation** produces a single-channel output where each pixel represents the probability of belonging to the target structure.
 
-### Why We Chose U-Net
-
-We chose U-Net because it is one of the most widely used architectures for biomedical image segmentation. The encoder captures both local and high-level image features, while the decoder reconstructs detailed segmentation masks. The skip connections help preserve fine spatial information that would otherwise be lost during downsampling, making U-Net particularly well suited for segmenting thin anatomical structures such as aponeuroses and fascicles.
+We chose U-Net because it is one of the most widely used architectures for biomedical image segmentation. In our brief literature review, U-Net was the go to model for it's efficiency with smaller datasets and ability to be applied across medical domains. The encoder captures both local and high-level image features, while the decoder reconstructs detailed segmentation masks. The skip connections help preserve fine spatial information that would otherwise be lost during downsampling, making U-Net particularly well suited for segmenting thin anatomical structures such as aponeuroses and fascicles.
 
 ---
 
-## 3. Resizing Images to 512×512
+## Resizing Images to 512×512
 
 All ultrasound images and masks were resized to **512 × 512 pixels** before training. Neural networks require images with consistent input dimensions.
 
@@ -125,121 +87,28 @@ A higher resolution could preserve more anatomical detail but would substantiall
 
 ---
 
-## 4. Training and Validation Split
+## Model Training Details
 
-The dataset was divided into:
-
-* 80% training
-* 20% validation
-
-using a fixed random seed.
-
----
-
-## 5. Optimizer Selection
-
-Both models were trained using the **Adam** optimizer. Adam automatically adapts the learning rate during training and generally performs well without extensive hyperparameter tuning.
-
-Since this project had limited development time, Adam provided an efficient and reliable optimization method.
-
-### Alternative Approaches
-
-#### Stochastic Gradient Descent (SGD)
-
-SGD can achieve excellent performance but usually requires careful tuning of the learning rate and momentum.
-
----
-
-## 6. Binary Cross Entropy Loss
-
-### What We Did
-
-Our initial segmentation model was trained using Binary Cross Entropy (BCE) where each pixel belongs to one of two classes:
-
-* Foreground
-* Background
-
-Binary Cross Entropy is therefore the standard loss function for binary segmentation.
-
-### Limitation
-
-Most pixels belong to the background.
-
-This class imbalance means a model can achieve very high pixel accuracy while still producing poor segmentation masks.
-
----
-
-## 7. Dice Loss
-
-Our final loss function combined Binary Cross Entropy and Dice Loss:
+* Divide dataset into 80% training, 20% validation using a fixed random seed.
+* Train both models using the **Adam** optimizer (preferred in literature because it automatically adapts the learning rate during training and generally performs well without extensive hyperparameter tuning)
+* Experimentations with loss functions revealed the limitations of using just BCE. Because most pixels belong to the background, our model can appear very accurate according to BCE while still producing poor segmentation masks. As a result, our final loss function combined Binary Cross Entropy and Dice Loss:
 
 ```
 Loss = BCE + Dice Loss
 ```
 
-Dice Loss directly measures the overlap between the predicted segmentation mask and the ground truth.
-
-Combining the two losses provides:
-
-* Stable optimization from Binary Cross Entropy.
-* Better overlap optimization from Dice Loss.
-
-This generally produces more accurate segmentation masks than either loss alone.
-
----
-
-## 8. Data Augmentation
-
-### What We Did
-
-During training we applied:
-
-* Horizontal flips
-* Small rotations
-* Random zoom
-
-The exact same transformation was applied to both the ultrasound image and its corresponding segmentation mask.
-
-### Why
-
-Medical datasets are typically small.
-
-Data augmentation artificially increases dataset diversity, helping the model generalize better while reducing overfitting.
+* Dice Loss directly measures the overlap between the predicted segmentation mask and the ground truth, so combining the two losses gives us BCE's stable optimization while getting better overlap optimization from Dice.
+Stable optimization from Binary Cross Entropy.
+* Data Augmentation: We applied these transformations across all experiments, to increase the size and diversity of our small dataset. Ideally, this helps the model learn correct generalizations without overfitting.
+  * Horizontal flips
+  * Small rotations
+  * Random zoom
+  * Random translation
+* Early Stopping: training automatically stopped if the validation loss failed to improve for five consecutive epochs and the model weights corresponding to the best validation performance were restored. It's worth noting this was only relevant for our initial trained models, since later experiments (post fixing an inversion error in the training data) were time crunched and capped at 10 epochs. We likely could have achieved better results allowing the models to train for longer. The DL Track paper found 24-26 epochs was ideal for U-Net's trained on muscle ultrasounds.
 
 ---
 
-## 9. Early Stopping
-
-Training automatically stopped if the validation loss failed to improve for five consecutive epochs.
-
-The model weights corresponding to the best validation performance were restored.
-
----
-
-## 10. Separate Networks for Aponeuroses and Fascicles
-
-We trained two independent U-Net models:
-
-* One specialized in aponeurosis segmentation.
-* One specialized in fascicle segmentation.
-
-These anatomical structures have very different visual characteristics.
-
-Aponeuroses are relatively thick and continuous, whereas fascicles are much thinner and more fragmented.
-
-Training separate models allowed each network to specialize in its own segmentation task.
-
-### Alternative
-
-A single multi-class segmentation model.
-
-Although feasible, this would increase optimization complexity and could reduce segmentation quality for the thinner fascicle structures.
-
----
-
-## 11. Classical Image Processing After Segmentation
-
-### What We Did
+## Classical Image Processing After Segmentation
 
 After segmentation, we applied several traditional image processing techniques:
 
@@ -249,15 +118,7 @@ After segmentation, we applied several traditional image processing techniques:
 * Line fitting
 * Geometric calculations
 
-These methods were then used to estimate:
-
-* Muscle Thickness (MT)
-* Pennation Angle (PA)
-* Fascicle Length (FL)
-
-These anatomical measurements are fundamentally geometric.
-
-Using deterministic image processing after segmentation makes every measurement transparent, reproducible, and easy to verify visually.
+These anatomical measurements are fundamentally geometric. Using deterministic image processing after segmentation makes every measurement transparent, reproducible, and easy to verify visually.
 
 # Model Performance
 
