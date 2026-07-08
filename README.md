@@ -31,6 +31,7 @@ Code in this repository
 * apo_training.ipynb: load and preprocesses the ultrasound images, checking for inverted masks in training data, and then train the standard U-Net followed by the U-Net with attention added.
 * fasc_training.ipynb: load and preprocesses with the same procedure as the aponeurosis set, with the exception that no inversion was necessary.
 * postprocessing.ipynb: cleaning masks, fitting lines, computing metrics, and saving predictions
+* metrics.ipynb: notebook to run evaluation metrics on our final model of choice
 
 ---
 
@@ -118,9 +119,23 @@ After segmentation, we applied several traditional image processing techniques:
 * Line fitting
 * Geometric calculations
 
+![Example annotated test image](blog_figures/annotated_our_work.png)
+
 These anatomical measurements are fundamentally geometric. Using deterministic image processing after segmentation makes every measurement transparent, reproducible, and easy to verify visually.
 
-# Model Performance
+# Discussion of Experiments
+
+In our hectic two-day sprint, we had some misteps in aligning our experiments. On day two, we discovered that a third of the aponeurosis training masks are inverted. Interestingly, our initial training run still achieved the highest Kaggle score despite the inverted training data. Still, we fixed the problem in preprocessing and retrained the aponeurosis and fascicle masks for both the initial U-Net and a U-Net with attention added. Because of time constraints, we only trained these for 10 epochs. The shortened training time probably factored into the lower relative performance.
+
+| Model | Num Epochs Trained | Kaggle Score |
+|---------|------------------:|---------------:|
+| U-Net (no inversion checking) | **25** | **1.2653** |
+| U-Net (with fixed inversion) | **10** | **1.54471** |
+| U-Net with Attention | **10** | **1.49788** |
+
+*Note that the Kaggle Score is a normalized mean absolute error (MAE) of the three target metrics, so lower is better. Because of the varying epochs, we can only directly compare the models trained on the pre-processed data (checking for inversions). The scores suggest that attention does improve the models ability to ignore background noise and focus on the importance features.
+
+# Performance Eval
 
 To evaluate the segmentation models, we measured both pixel-level and overlap-based metrics. While pixel accuracy provides an overall measure of correctly classified pixels, it can be misleading for highly imbalanced segmentation tasks where the background occupies most of the image. Therefore, we also report Precision, Recall, Dice Coefficient, and Intersection over Union (IoU), which better reflect the quality of the predicted segmentation masks.
 
