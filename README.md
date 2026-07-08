@@ -1,15 +1,18 @@
-# umud_challenge
-U-Net architecture for muscle architecture segmentation from ultrasound images
-
 # Muscle Architecture Estimation from Ultrasound Images
 
 ## Project Overview
 
 The goal of our project was to automatically estimate muscle architecture parameters from ultrasound images. Specifically, our pipeline estimates:
 
+In the last two days, we took on a Kaggle challenge released by a researcher interested in muscular adaptations to training and muscular development. The challenge was this: can we completely automatate the calculation of key parameters from ultrasound muscle images? Ultrasound scans are one of the most accessible diagnostic imaging techniques, but extracting useful information from them typically requires manual annotations. This is not only tedious, but also inconsistent.
+
+Using data made available through the Universal Musculoskeletal Ultrasonography Database (UMUD), have access to 
+
 * **Muscle Thickness (MT)**
 * **Pennation Angle (PA)**
 * **Fascicle Length (FL)**
+
+![Annotated ultrasound of the 3 parameters](blog_figures/umud_diagram.png)
 
 Rather than predicting these measurements directly, we first segmented the relevant anatomical structures (aponeuroses and fascicles) using deep learning. The resulting segmentation masks were then processed using classical image processing and geometric analysis to calculate the final measurements.
 
