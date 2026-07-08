@@ -93,13 +93,10 @@ A higher resolution could preserve more anatomical detail but would substantiall
 * Divide dataset into 80% training, 20% validation using a fixed random seed.
 * Train both models using the **Adam** optimizer (preferred in literature because it automatically adapts the learning rate during training and generally performs well without extensive hyperparameter tuning)
 * Experimentations with loss functions revealed the limitations of using just BCE. Because most pixels belong to the background, our model can appear very accurate according to BCE while still producing poor segmentation masks. As a result, our final loss function combined Binary Cross Entropy and Dice Loss:
-
 ```
 Loss = BCE + Dice Loss
 ```
-
-* Dice Loss directly measures the overlap between the predicted segmentation mask and the ground truth, so combining the two losses gives us BCE's stable optimization while getting better overlap optimization from Dice.
-Stable optimization from Binary Cross Entropy.
+* Dice Loss directly measures the overlap between the predicted segmentation mask and the ground truth, so combining the two losses gives us BCE's stability while getting better overlap optimization from Dice.
 * Data Augmentation: We applied these transformations across all experiments, to increase the size and diversity of our small dataset. Ideally, this helps the model learn correct generalizations without overfitting.
   * Horizontal flips
   * Small rotations
