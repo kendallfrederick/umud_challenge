@@ -2,7 +2,7 @@
 
 In the last two days, we took on a Kaggle challenge released by a researcher interested in muscular adaptations to training and muscular development. The challenge was this: can we completely automatate the calculation of key parameters from ultrasound muscle images? Ultrasound scans are one of the most accessible diagnostic imaging techniques, but extracting useful information from them typically requires manual annotations, which is not only tedious, but also inconsistent. Deep learning techniques for ultrasound images have great potential to accelerate clinical research and improve monitoring of rehabing from injury.
 
-Using data made available through the Universal Musculoskeletal Ultrasonography Database (UMUD), have access to 1048 images for aponeurosis 2761 images for fascicles, each with an associated mannually created mask for training. 
+Using data made available through the Universal Musculoskeletal Ultrasonography Database (UMUD), we have access to 1048 images for aponeurosis and 2761 images for fascicles, each with an associated mannually created mask for training. 
 
 ![Annotated ultrasound of the 3 parameters](blog_figures/umud_diagram.png)
 
@@ -56,7 +56,7 @@ The **decoder** reconstructs the segmentation mask by progressively upsampling t
 
 Finally, a **1×1 convolution with a sigmoid activation** produces a single-channel output where each pixel represents the probability of belonging to the target structure.
 
-We chose U-Net because it is one of the most widely used architectures for biomedical image segmentation. In our brief literature review, U-Net was the go to model for it's efficiency with smaller datasets and ability to be applied across medical domains. The encoder captures both local and high-level image features, while the decoder reconstructs detailed segmentation masks. The skip connections help preserve fine spatial information that would otherwise be lost during downsampling, making U-Net particularly well suited for segmenting thin anatomical structures such as aponeuroses and fascicles.
+We chose U-Net because it is one of the most widely used architectures for biomedical image segmentation. In our brief literature review, U-Net was the go to model for its efficiency with smaller datasets and ability to be applied across medical domains. The encoder captures both local and high-level image features, while the decoder reconstructs detailed segmentation masks. The skip connections help preserve fine spatial information that would otherwise be lost during downsampling, making U-Net particularly well suited for segmenting thin anatomical structures such as aponeuroses and fascicles.
 
 ---
 
